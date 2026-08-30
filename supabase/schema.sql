@@ -37,6 +37,11 @@ create policy "staff full access" on public.events
 -- Ninguém acessa a tabela diretamente com a chave anônima (link público).
 -- O acesso do link público passa só pelas funções abaixo, que verificam o token.
 
+-- Postgres não deixa trocar o formato de retorno via CREATE OR REPLACE, então
+-- apagamos antes de recriar (seguro rodar sempre, inclusive na primeira vez).
+drop function if exists public.briefing_get(text);
+drop function if exists public.briefing_create(text, text, text, date);
+
 create or replace function public.briefing_create(
   p_noiva text,
   p_noivo text,

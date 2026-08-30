@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { BriefingForm } from "@/components/briefing/BriefingForm";
+import type { AvatarConfig } from "@/lib/avatar/types";
 
 export default async function BriefingPage({
   params,
@@ -30,6 +31,8 @@ export default async function BriefingPage({
     data_evento: string | null;
     status: string;
     responses: Record<string, unknown>;
+    avatar1: AvatarConfig | null;
+    avatar2: AvatarConfig | null;
   };
 
   const initialResponses = {
@@ -52,6 +55,8 @@ export default async function BriefingPage({
         token={token}
         initialResponses={initialResponses}
         initialStatus={row.status}
+        avatar1={row.avatar1 ?? undefined}
+        avatar2={row.avatar2 ?? undefined}
       />
     </div>
   );

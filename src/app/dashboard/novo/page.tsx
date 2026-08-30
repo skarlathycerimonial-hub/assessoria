@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { AvatarPicker } from "@/components/avatar/AvatarPicker";
+import { defaultAvatar1, defaultAvatar2, type AvatarConfig } from "@/lib/avatar/types";
 
 export default function NovoCasalPage() {
   const supabase = createClient();
@@ -10,6 +12,8 @@ export default function NovoCasalPage() {
   const [noivo, setNoivo] = useState("");
   const [email, setEmail] = useState("");
   const [dataEvento, setDataEvento] = useState("");
+  const [avatar1, setAvatar1] = useState<AvatarConfig>(defaultAvatar1);
+  const [avatar2, setAvatar2] = useState<AvatarConfig>(defaultAvatar2);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ id: string; token: string } | null>(null);
@@ -28,6 +32,8 @@ export default function NovoCasalPage() {
         p_noivo: noivo,
         p_email: email || null,
         p_data_evento: dataEvento || null,
+        p_avatar1: avatar1,
+        p_avatar2: avatar2,
       })
       .single();
     setLoading(false);
@@ -88,14 +94,14 @@ export default function NovoCasalPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
           required
-          placeholder="Nome da noiva"
+          placeholder="Nome do(a) noivo(a) 1"
           value={noiva}
           onChange={(e) => setNoiva(e.target.value)}
           className="w-full rounded-xl border border-border bg-card px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition"
         />
         <input
           required
-          placeholder="Nome do noivo"
+          placeholder="Nome do(a) noivo(a) 2"
           value={noivo}
           onChange={(e) => setNoivo(e.target.value)}
           className="w-full rounded-xl border border-border bg-card px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition"
@@ -114,6 +120,19 @@ export default function NovoCasalPage() {
           onChange={(e) => setDataEvento(e.target.value)}
           className="w-full rounded-xl border border-border bg-card px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition"
         />
+
+        <div>
+          <p className="text-sm font-medium text-foreground mb-2">
+            Bonequinhos do casal
+          </p>
+          <p className="text-xs text-muted mb-3">
+            Personalize como cada um aparece na barra de progresso do briefing.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AvatarPicker label={noiva || "Noivo(a) 1"} value={avatar1} onChange={setAvatar1} />
+            <AvatarPicker label={noivo || "Noivo(a) 2"} value={avatar2} onChange={setAvatar2} />
+          </div>
+        </div>
 
         {error && <p className="text-sm text-red-500">{error}</p>}
 

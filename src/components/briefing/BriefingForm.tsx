@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { briefingSections } from "@/lib/briefing/schema";
 import { FieldRenderer, type FieldValue } from "./FieldRenderer";
+import { BriefingProgress } from "./BriefingProgress";
+import type { AvatarConfig } from "@/lib/avatar/types";
 
 type Responses = Record<string, FieldValue>;
 
@@ -11,6 +13,8 @@ interface BriefingFormProps {
   token: string;
   initialResponses: Responses;
   initialStatus: string;
+  avatar1?: AvatarConfig;
+  avatar2?: AvatarConfig;
 }
 
 function isFilled(value: FieldValue) {
@@ -18,7 +22,13 @@ function isFilled(value: FieldValue) {
   return value !== undefined && value !== null && String(value).trim().length > 0;
 }
 
-export function BriefingForm({ token, initialResponses, initialStatus }: BriefingFormProps) {
+export function BriefingForm({
+  token,
+  initialResponses,
+  initialStatus,
+  avatar1,
+  avatar2,
+}: BriefingFormProps) {
   const supabase = useMemo(() => createClient(), []);
   const [stepIndex, setStepIndex] = useState(0);
   const [responses, setResponses] = useState<Responses>(initialResponses);
@@ -29,7 +39,6 @@ export function BriefingForm({ token, initialResponses, initialStatus }: Briefin
 
   const totalSteps = briefingSections.length;
   const section = briefingSections[stepIndex];
-  const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
 
   function persist(next: Responses, complete: boolean) {
     setSaving(true);
@@ -111,20 +120,13 @@ export function BriefingForm({ token, initialResponses, initialStatus }: Briefin
 
   return (
     <div className="mx-auto max-w-xl px-6 py-12">
-      <div className="mb-8">
-        <div className="flex items-center justify-between text-xs text-muted mb-2">
-          <span>
-            Etapa {stepIndex + 1} de {totalSteps}
-          </span>
-          <span>{saving ? "salvando…" : "salvo"}</span>
-        </div>
-        <div className="h-1.5 w-full rounded-full bg-brand-soft overflow-hidden">
-          <div
-            className="h-full rounded-full bg-brand transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+      <BriefingProgress
+        stepIndex={stepIndex}
+        totalSteps={totalSteps}
+        avatar1={avatar1}
+        avatar2={avatar2}
+        saving={saving}
+      />
 
       <h2 className="font-serif text-2xl md:text-3xl text-brand-dark mb-1">{section.title}</h2>
       {section.subtitle && <p className="text-muted text-[15px] mb-6">{section.subtitle}</p>}
@@ -138,6 +140,7 @@ export function BriefingForm({ token, initialResponses, initialStatus }: Briefin
             value={responses[field.key]}
             onChange={(v) => updateField(field.key, v)}
             showError={showErrors && field.required && !isFilled(responses[field.key])}
+            token={token}
           />
         ))}
       </div>

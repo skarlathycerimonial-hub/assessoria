@@ -6,7 +6,8 @@ export type FieldType =
   | "textarea"
   | "select"
   | "multiselect"
-  | "scale";
+  | "scale"
+  | "media";
 
 export interface BriefingField {
   key: string;
@@ -25,6 +26,13 @@ export interface BriefingSection {
   fields: BriefingField[];
 }
 
+export interface MediaItem {
+  kind: "file" | "link";
+  url: string;
+  name?: string;
+  contentType?: string;
+}
+
 export const briefingSections: BriefingSection[] = [
   {
     id: "inicio",
@@ -33,20 +41,14 @@ export const briefingSections: BriefingSection[] = [
       "Só pra gente se localizar. Sem pressa, dá pra parar e voltar quando quiser — o link salva tudo.",
     fields: [
       { key: "email", label: "E-mail", type: "email", required: true },
-      { key: "noiva", label: "Nome da noiva", type: "text", required: true },
-      { key: "noivo", label: "Nome do noivo", type: "text", required: true },
+      { key: "noiva", label: "Nome do(a) noivo(a) 1", type: "text", required: true },
+      { key: "noivo", label: "Nome do(a) noivo(a) 2", type: "text", required: true },
       {
         key: "apelidos",
         label: "Como podemos chamar vocês? (apelidos)",
         type: "text",
       },
       { key: "data_evento", label: "Data do evento", type: "date", required: true },
-    ],
-  },
-  {
-    id: "skarlathy",
-    title: "Sobre a gente",
-    fields: [
       {
         key: "o_que_chamou_atencao",
         label: "O que fez vocês decidirem contratar a Skarlathy Assessoria?",
@@ -64,13 +66,18 @@ export const briefingSections: BriefingSection[] = [
   {
     id: "historia",
     title: "A história de vocês",
-    subtitle: "Agora vamos te conhecer melhor. ♥",
+    subtitle: "Agora vamos te conhecer melhor. ♥ Se tiver uma foto de vocês dois, adora receber!",
     fields: [
       {
         key: "historia_casal",
         label: "Como se conheceram? Quanto tempo estão juntos? Como foi o pedido?",
         type: "textarea",
         required: true,
+      },
+      {
+        key: "foto_casal",
+        label: "Uma foto de vocês dois (opcional, mas a gente ama)",
+        type: "media",
       },
       {
         key: "o_que_gostam_juntos",
@@ -101,7 +108,7 @@ export const briefingSections: BriefingSection[] = [
   },
   {
     id: "familia",
-    title: "Família",
+    title: "Família, padrinhos e madrinhas",
     fields: [
       {
         key: "religiao",
@@ -142,25 +149,18 @@ export const briefingSections: BriefingSection[] = [
         type: "textarea",
         required: true,
       },
-    ],
-  },
-  {
-    id: "padrinhos",
-    title: "Padrinhos e madrinhas",
-    fields: [
       { key: "qtd_padrinhos", label: "Quantos padrinhos e madrinhas (aproximado)", type: "text" },
-      {
-        key: "convite_especial_padrinhos",
-        label: "Vai querer um convite especial pra eles? O que pensaram em dar?",
-        type: "textarea",
-      },
       {
         key: "padrao_madrinhas",
         label: "Padrão de vestido das madrinhas (cor, estilo, modelo)",
         type: "textarea",
       },
       { key: "traje_padrinhos", label: "Traje dos padrinhos", type: "textarea" },
-      { key: "presente_padrinhos", label: "Vai dar presente para os padrinhos?", type: "text" },
+      {
+        key: "presente_padrinhos",
+        label: "Vai querer convite ou presente especial para os padrinhos?",
+        type: "text",
+      },
     ],
   },
   {
@@ -216,10 +216,14 @@ export const briefingSections: BriefingSection[] = [
         type: "select",
         options: ["Sim", "Não", "Ainda não decidimos"],
       },
-      { key: "musica_cerimonia", label: "O que pensaram para a música da cerimônia?", type: "textarea" },
+      {
+        key: "musica_cerimonia",
+        label: "O que pensaram para a música da cerimônia? Pode colar um link do YouTube",
+        type: "media",
+      },
       {
         key: "clarinada",
-        label: "Noiva vai querer clarinada para o anúncio?",
+        label: "Vai querer clarinada para o anúncio?",
         type: "select",
         options: ["Sim, vou querer o anúncio", "Não quero o anúncio"],
       },
@@ -251,6 +255,11 @@ export const briefingSections: BriefingSection[] = [
         key: "fornecedor_preferencia",
         label: "Preferência ou restrição de fornecedor de cabelo/maquiagem?",
         type: "text",
+      },
+      {
+        key: "preparo_referencias",
+        label: "Referência de cabelo e maquiagem (foto, print ou link)",
+        type: "media",
       },
       { key: "onde_noiva_arruma", label: "Onde a noiva vai se arrumar?", type: "text" },
       { key: "com_quem_noiva", label: "Quem estará com a noiva nesse momento?", type: "text" },
@@ -307,12 +316,6 @@ export const briefingSections: BriefingSection[] = [
         label: "Algum medo ou algo que já viram em outros casamentos e não querem de jeito nenhum?",
         type: "textarea",
       },
-    ],
-  },
-  {
-    id: "orcamento",
-    title: "Orçamento",
-    fields: [
       {
         key: "valor_pretendido",
         label: "Qual valor pretendem investir no casamento?",
@@ -451,26 +454,26 @@ export const briefingSections: BriefingSection[] = [
       },
       {
         key: "perfil_noiva_festa",
-        label: "Na festa, a noiva é do tipo...",
+        label: "Na festa, o(a) noivo(a) 1 é do tipo...",
         type: "select",
         options: [
           "Que não sai da pista de dança",
           "Que cansa rápido e volta pra sentar",
           "Que quer provar todas as comidinhas",
           "Que bebe todas",
-          "Que fica sentada, conversando e tirando foto",
+          "Que fica sentado(a), conversando e tirando foto",
         ],
       },
       {
         key: "perfil_noivo_festa",
-        label: "Na festa, o noivo é do tipo...",
+        label: "Na festa, o(a) noivo(a) 2 é do tipo...",
         type: "select",
         options: [
           "Que não sai da pista de dança",
           "Que cansa rápido e volta pra sentar",
           "Que quer provar todas as comidinhas",
           "Que bebe todas",
-          "Que fica sentado, conversando e tirando foto",
+          "Que fica sentado(a), conversando e tirando foto",
         ],
       },
     ],
@@ -498,6 +501,11 @@ export const briefingSections: BriefingSection[] = [
           "Kit toalete",
           "Tag de lembrancinhas",
         ],
+      },
+      {
+        key: "papelaria_referencias",
+        label: "Referência de convite ou papelaria (foto ou link)",
+        type: "media",
       },
       {
         key: "lembrancinhas",
@@ -545,8 +553,7 @@ export const briefingSections: BriefingSection[] = [
   {
     id: "decoracao",
     title: "Decoração",
-    subtitle:
-      "Se tiver Pinterest, Instagram ou pasta de referências, cole o link aqui — ajuda demais.",
+    subtitle: "Se tiver Pinterest, Instagram ou fotos salvas, é o lugar de colar/anexar tudo.",
     fields: [
       {
         key: "cores_decoracao",
@@ -556,8 +563,8 @@ export const briefingSections: BriefingSection[] = [
       },
       {
         key: "referencias_decoracao",
-        label: "Link de referências (Pinterest, Instagram)",
-        type: "text",
+        label: "Referências de decoração (fotos ou link do Pinterest/Instagram)",
+        type: "media",
       },
       { key: "nao_gosta_decoracao", label: "Algo que não gostam de jeito nenhum em decoração?", type: "text" },
       { key: "cenario_fotos", label: "Gostariam de algum cenário para fotos? (painel de flores, letreiro, arco...)", type: "text" },
@@ -576,32 +583,31 @@ export const briefingSections: BriefingSection[] = [
   },
   {
     id: "trajes",
-    title: "Trajes",
+    title: "Trajes e últimos detalhes",
     fields: [
       {
         key: "noivo_traje",
-        label: "Noivo pretende...",
+        label: "Noivo(a) 2 pretende...",
         type: "select",
         options: ["Alugar", "Comprar", "Mandar fazer"],
       },
       { key: "noivo_cor_estilo", label: "Já tem em mente cor ou estilo do terno?", type: "text" },
       {
         key: "noiva_vestido",
-        label: "Noiva pretende...",
+        label: "Noivo(a) 1 pretende...",
         type: "select",
         options: ["Alugar", "Comprar", "Mandar fazer", "Primeiro aluguel"],
+      },
+      {
+        key: "trajes_referencias",
+        label: "Referências de terno/vestido (fotos ou link)",
+        type: "media",
       },
       {
         key: "nota_vestido_privada",
         label: "Detalhes do vestido dos sonhos (fica só entre você e a Skar — combine no WhatsApp se preferir)",
         type: "textarea",
       },
-    ],
-  },
-  {
-    id: "extras",
-    title: "Últimos detalhes",
-    fields: [
       {
         key: "civil_mesmo_dia",
         label: "Vão casar no civil no mesmo dia?",

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { briefingSections, type BriefingField, type MediaItem } from "@/lib/briefing/schema";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { CopyLinkButton } from "@/components/dashboard/CopyLinkButton";
+import { DeleteEventButton } from "@/components/dashboard/DeleteEventButton";
 import { CoupleAvatar } from "@/components/avatar/CoupleAvatar";
 import { defaultAvatar1, defaultAvatar2, type AvatarConfig } from "@/lib/avatar/types";
 
@@ -85,7 +86,14 @@ export default async function CasalPage({
             </p>
           </div>
         </div>
-        <StatusBadge status={event.status} />
+        <div className="flex items-center gap-4">
+          <StatusBadge status={event.status} />
+          <DeleteEventButton
+            id={event.id}
+            label={`${event.noiva || "—"} & ${event.noivo || "—"}`}
+            redirectTo="/dashboard"
+          />
+        </div>
       </div>
 
       <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 mb-8">

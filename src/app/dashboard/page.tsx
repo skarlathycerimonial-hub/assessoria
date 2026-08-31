@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { DeleteEventButton } from "@/components/dashboard/DeleteEventButton";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -30,12 +31,11 @@ export default async function DashboardPage() {
 
       <div className="grid gap-3">
         {events?.map((ev) => (
-          <Link
+          <div
             key={ev.id}
-            href={`/dashboard/${ev.id}`}
             className="flex items-center justify-between rounded-xl border border-border bg-card px-5 py-4 hover:border-brand/50 transition"
           >
-            <div>
+            <Link href={`/dashboard/${ev.id}`} className="flex-1 min-w-0">
               <p className="text-[15px] font-medium text-foreground">
                 {ev.noiva || "—"} &amp; {ev.noivo || "—"}
               </p>
@@ -44,9 +44,12 @@ export default async function DashboardPage() {
                   ? new Date(ev.data_evento + "T00:00:00").toLocaleDateString("pt-BR")
                   : "Data ainda não definida"}
               </p>
+            </Link>
+            <div className="flex items-center gap-4 shrink-0">
+              <StatusBadge status={ev.status} />
+              <DeleteEventButton id={ev.id} label={`${ev.noiva || "—"} & ${ev.noivo || "—"}`} />
             </div>
-            <StatusBadge status={ev.status} />
-          </Link>
+          </div>
         ))}
       </div>
     </div>

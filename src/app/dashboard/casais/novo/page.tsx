@@ -2,16 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AvatarPicker } from "@/components/avatar/AvatarPicker";
 import { defaultAvatar1, defaultAvatar2, type AvatarConfig } from "@/lib/avatar/types";
 
 export default function NovoCasalPage() {
   const supabase = createClient();
+  const router = useRouter();
   const [noiva, setNoiva] = useState("");
   const [noivo, setNoivo] = useState("");
   const [email, setEmail] = useState("");
   const [dataEvento, setDataEvento] = useState("");
+  const [temBriefingLegado, setTemBriefingLegado] = useState(false);
   const [avatar1, setAvatar1] = useState<AvatarConfig>(defaultAvatar1);
   const [avatar2, setAvatar2] = useState<AvatarConfig>(defaultAvatar2);
   const [loading, setLoading] = useState(false);
@@ -26,6 +29,28 @@ export default function NovoCasalPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (temBriefingLegado) {
+      const { data, error } = await supabase
+        .from("events")
+        .insert({
+          noiva,
+          noivo,
+          data_evento: dataEvento || null,
+          tem_briefing_legado: true,
+          status: "completo",
+        })
+        .select("id")
+        .single();
+      setLoading(false);
+      if (error || !data) {
+        setError("Não foi possível cadastrar o casal. Tente novamente.");
+        return;
+      }
+      router.push(`/dashboard/casais/${data.id}`);
+      return;
+    }
+
     const { data, error } = await supabase
       .rpc("briefing_create", {
         p_noiva: noiva,
@@ -80,7 +105,7 @@ export default function NovoCasalPage() {
         </a>
 
         <div>
-          <Link href={`/dashboard/${result.id}`} className="text-sm text-muted underline underline-offset-4">
+          <Link href={`/dashboard/casais/${result.id}`} className="text-sm text-muted underline underline-offset-4">
             Ver painel do casal
           </Link>
         </div>
@@ -107,13 +132,6 @@ export default function NovoCasalPage() {
           className="w-full rounded-xl border border-border bg-card px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition"
         />
         <input
-          type="email"
-          placeholder="E-mail (opcional)"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-xl border border-border bg-card px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition"
-        />
-        <input
           type="date"
           placeholder="Data do evento (opcional)"
           value={dataEvento}
@@ -121,18 +139,60 @@ export default function NovoCasalPage() {
           className="w-full rounded-xl border border-border bg-card px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition"
         />
 
-        <div>
-          <p className="text-sm font-medium text-foreground mb-2">
-            Bonequinhos do casal
-          </p>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-sm font-medium text-foreground mb-1">Já tenho o briefing desse casal</p>
           <p className="text-xs text-muted mb-3">
-            Personalize como cada um aparece na barra de progresso do briefing.
+            Marque para casais antigos ou que você já atendeu por fora — não vai gerar link nem
+            entrar na fila de briefing pendente.
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <AvatarPicker label={noiva || "Noivo(a) 1"} value={avatar1} onChange={setAvatar1} />
-            <AvatarPicker label={noivo || "Noivo(a) 2"} value={avatar2} onChange={setAvatar2} />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setTemBriefingLegado(false)}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+                !temBriefingLegado
+                  ? "border-brand bg-brand-soft text-brand-dark font-medium"
+                  : "border-border"
+              }`}
+            >
+              Não, preciso do link
+            </button>
+            <button
+              type="button"
+              onClick={() => setTemBriefingLegado(true)}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+                temBriefingLegado
+                  ? "border-brand bg-brand-soft text-brand-dark font-medium"
+                  : "border-border"
+              }`}
+            >
+              Sim, já tenho
+            </button>
           </div>
         </div>
+
+        {!temBriefingLegado && (
+          <>
+            <input
+              type="email"
+              placeholder="E-mail (opcional)"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition"
+            />
+
+            <div>
+              <p className="text-sm font-medium text-foreground mb-2">Bonequinhos do casal</p>
+              <p className="text-xs text-muted mb-3">
+                Personalize como cada um aparece na barra de progresso do briefing.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <AvatarPicker label={noiva || "Noivo(a) 1"} value={avatar1} onChange={setAvatar1} />
+                <AvatarPicker label={noivo || "Noivo(a) 2"} value={avatar2} onChange={setAvatar2} />
+              </div>
+            </div>
+          </>
+        )}
 
         {error && <p className="text-sm text-red-500">{error}</p>}
 
@@ -141,7 +201,7 @@ export default function NovoCasalPage() {
           disabled={loading}
           className="mt-2 rounded-full bg-brand hover:bg-brand-dark transition text-white px-7 py-3 text-[15px] font-medium disabled:opacity-60"
         >
-          {loading ? "Gerando…" : "Gerar link do briefing"}
+          {loading ? "Salvando…" : temBriefingLegado ? "Cadastrar casal" : "Gerar link do briefing"}
         </button>
       </form>
     </div>

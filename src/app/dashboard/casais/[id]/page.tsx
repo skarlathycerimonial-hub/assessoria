@@ -87,19 +87,27 @@ export default async function CasalPage({
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <StatusBadge status={event.status} />
+          {event.tem_briefing_legado ? (
+            <span className="rounded-full px-3 py-1 text-xs font-medium bg-neutral-100 text-neutral-600">
+              Já atendido
+            </span>
+          ) : (
+            <StatusBadge status={event.status} />
+          )}
           <DeleteEventButton
             id={event.id}
             label={`${event.noiva || "—"} & ${event.noivo || "—"}`}
-            redirectTo="/dashboard"
+            redirectTo="/dashboard/casais"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 mb-8">
-        <span className="flex-1 truncate text-sm text-muted">{link}</span>
-        <CopyLinkButton link={link} />
-      </div>
+      {!event.tem_briefing_legado && (
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 mb-8">
+          <span className="flex-1 truncate text-sm text-muted">{link}</span>
+          <CopyLinkButton link={link} />
+        </div>
+      )}
 
       <div className="flex flex-col gap-8">
         {briefingSections.map((section) => {

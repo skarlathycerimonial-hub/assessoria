@@ -17,6 +17,7 @@ export interface BriefingField {
   required?: boolean;
   options?: string[];
   placeholder?: string;
+  maxItems?: number;
 }
 
 export interface BriefingSection {

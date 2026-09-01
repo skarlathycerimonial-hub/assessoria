@@ -12,40 +12,44 @@ interface FieldRendererProps {
   onChange: (value: FieldValue) => void;
   showError?: boolean;
   token?: string;
+  bucket?: string;
 }
 
 const inputClass =
   "w-full rounded-xl border border-border bg-card px-4 py-3 text-[15px] text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition";
-
-const STORAGE_BUCKET = "briefing-anexos";
 
 function MediaField({
   field,
   value,
   onChange,
   token,
+  bucket,
 }: {
   field: BriefingField;
   value: MediaItem[] | undefined;
   onChange: (value: MediaItem[]) => void;
   token?: string;
+  bucket: string;
 }) {
   const supabase = createClient();
   const items = value ?? [];
+  const atLimit = field.maxItems !== undefined && items.length >= field.maxItems;
   const [linkDraft, setLinkDraft] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0 || !token) return;
+    const remaining = field.maxItems !== undefined ? field.maxItems - items.length : Infinity;
+    const files = Array.from(fileList).slice(0, Math.max(remaining, 0));
     setUploading(true);
     const uploaded: MediaItem[] = [];
-    for (const file of Array.from(fileList)) {
+    for (const file of files) {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `${token}/${field.key}/${crypto.randomUUID()}-${safeName}`;
-      const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file);
+      const { error } = await supabase.storage.from(bucket).upload(path, file);
       if (!error) {
-        const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
         uploaded.push({ kind: "file", url: data.publicUrl, name: file.name, contentType: file.type });
       }
     }
@@ -55,7 +59,7 @@ function MediaField({
 
   function addLink() {
     const url = linkDraft.trim();
-    if (!url) return;
+    if (!url || atLimit) return;
     onChange([...items, { kind: "link", url }]);
     setLinkDraft("");
   }
@@ -99,44 +103,55 @@ function MediaField({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,video/*"
-          multiple
-          className="hidden"
-          onChange={(e) => handleFiles(e.target.files)}
-        />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="rounded-full border border-brand text-brand-dark px-4 py-2 text-sm font-medium hover:bg-brand-soft transition disabled:opacity-60"
-        >
-          {uploading ? "Enviando…" : "+ Anexar foto ou vídeo"}
-        </button>
-        <span className="text-xs text-muted">ou</span>
-        <input
-          type="text"
-          placeholder="cole um link (YouTube, Pinterest…)"
-          value={linkDraft}
-          onChange={(e) => setLinkDraft(e.target.value)}
-          className="flex-1 min-w-[160px] rounded-full border border-border bg-card px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition"
-        />
-        <button
-          type="button"
-          onClick={addLink}
-          className="rounded-full border border-border px-4 py-2 text-sm hover:border-brand/50 transition"
-        >
-          Adicionar
-        </button>
-      </div>
+      {atLimit ? (
+        <p className="text-xs text-muted">Máximo de {field.maxItems} atingido.</p>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="rounded-full border border-brand text-brand-dark px-4 py-2 text-sm font-medium hover:bg-brand-soft transition disabled:opacity-60"
+          >
+            {uploading ? "Enviando…" : "+ Anexar foto ou vídeo"}
+          </button>
+          <span className="text-xs text-muted">ou</span>
+          <input
+            type="text"
+            placeholder="cole um link (YouTube, Pinterest…)"
+            value={linkDraft}
+            onChange={(e) => setLinkDraft(e.target.value)}
+            className="flex-1 min-w-[160px] rounded-full border border-border bg-card px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition"
+          />
+          <button
+            type="button"
+            onClick={addLink}
+            className="rounded-full border border-border px-4 py-2 text-sm hover:border-brand/50 transition"
+          >
+            Adicionar
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export function FieldRenderer({ field, value, onChange, showError, token }: FieldRendererProps) {
+export function FieldRenderer({
+  field,
+  value,
+  onChange,
+  showError,
+  token,
+  bucket = "briefing-anexos",
+}: FieldRendererProps) {
   const errorRing = showError ? "border-red-400 focus:ring-red-200" : "";
 
   return (
@@ -244,6 +259,7 @@ export function FieldRenderer({ field, value, onChange, showError, token }: Fiel
           value={value as MediaItem[] | undefined}
           onChange={onChange}
           token={token}
+          bucket={bucket}
         />
       )}
     </div>

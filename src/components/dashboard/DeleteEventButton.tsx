@@ -8,10 +8,14 @@ export function DeleteEventButton({
   id,
   label,
   redirectTo,
+  table = "events",
+  confirmNoun = "casal",
 }: {
   id: string;
   label: string;
   redirectTo?: string;
+  table?: string;
+  confirmNoun?: string;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -20,10 +24,10 @@ export function DeleteEventButton({
   async function handleDelete(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (!window.confirm(`Apagar o casal "${label}"? Essa ação não pode ser desfeita.`)) return;
+    if (!window.confirm(`Apagar o ${confirmNoun} "${label}"? Essa ação não pode ser desfeita.`)) return;
 
     setLoading(true);
-    await supabase.from("events").delete().eq("id", id);
+    await supabase.from(table).delete().eq("id", id);
     setLoading(false);
 
     if (redirectTo) router.push(redirectTo);

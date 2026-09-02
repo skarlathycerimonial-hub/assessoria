@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { BriefingField, MediaItem } from "@/lib/briefing/schema";
+import { applyCoupleTerms, resolveCoupleTerms, type CoupleTerms } from "@/lib/avatar/coupleTerms";
 
 export type FieldValue = string | string[] | number | MediaItem[] | undefined;
 
@@ -13,6 +14,7 @@ interface FieldRendererProps {
   showError?: boolean;
   token?: string;
   bucket?: string;
+  coupleTerms?: CoupleTerms;
 }
 
 const inputClass =
@@ -36,6 +38,8 @@ function MediaField({
   const atLimit = field.maxItems !== undefined && items.length >= field.maxItems;
   const [linkDraft, setLinkDraft] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [justAdded, setJustAdded] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFiles(fileList: FileList | null) {
@@ -43,7 +47,9 @@ function MediaField({
     const remaining = field.maxItems !== undefined ? field.maxItems - items.length : Infinity;
     const files = Array.from(fileList).slice(0, Math.max(remaining, 0));
     setUploading(true);
+    setUploadError(null);
     const uploaded: MediaItem[] = [];
+    const failed: string[] = [];
     for (const file of files) {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `${token}/${field.key}/${crypto.randomUUID()}-${safeName}`;
@@ -51,10 +57,21 @@ function MediaField({
       if (!error) {
         const { data } = supabase.storage.from(bucket).getPublicUrl(path);
         uploaded.push({ kind: "file", url: data.publicUrl, name: file.name, contentType: file.type });
+      } else {
+        failed.push(file.name);
       }
     }
     setUploading(false);
-    if (uploaded.length) onChange([...items, ...uploaded]);
+    if (uploaded.length) {
+      onChange([...items, ...uploaded]);
+      setJustAdded(uploaded.length);
+      setTimeout(() => setJustAdded(0), 2500);
+    }
+    if (failed.length) {
+      setUploadError(
+        `Não consegui anexar ${failed.join(", ")}. Verifique sua internet e tente de novo.`
+      );
+    }
   }
 
   function addLink() {
@@ -70,38 +87,58 @@ function MediaField({
 
   return (
     <div className="flex flex-col gap-3">
+      {justAdded > 0 && (
+        <p className="text-sm text-emerald-600 font-medium">
+          ✓ {justAdded === 1 ? "Anexado!" : `${justAdded} anexados!`}
+        </p>
+      )}
+
       {items.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {items.map((item, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm max-w-[220px]"
+              className="relative flex flex-col items-center gap-1.5 w-24"
             >
-              {item.kind === "file" && item.contentType?.startsWith("image/") ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.url} alt="" className="h-8 w-8 rounded object-cover" />
-              ) : (
-                <span>{item.kind === "file" ? "🎬" : "🔗"}</span>
-              )}
+              <div className="relative">
+                {item.kind === "file" && item.contentType?.startsWith("image/") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.url}
+                    alt=""
+                    className="h-24 w-24 rounded-xl object-cover border-2 border-emerald-400"
+                  />
+                ) : (
+                  <div className="h-24 w-24 rounded-xl border-2 border-emerald-400 bg-brand-soft flex items-center justify-center text-3xl">
+                    {item.kind === "file" ? "🎬" : "🔗"}
+                  </div>
+                )}
+                <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center">
+                  ✓
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeAt(i)}
+                  className="absolute -bottom-2 -right-2 h-6 w-6 rounded-full bg-card border border-border text-muted hover:text-red-500 flex items-center justify-center"
+                  title="Remover"
+                >
+                  ×
+                </button>
+              </div>
               <a
                 href={item.url}
                 target="_blank"
                 rel="noreferrer"
-                className="truncate text-brand-dark underline underline-offset-2"
+                className="text-xs text-brand-dark underline underline-offset-2 truncate w-full text-center"
               >
                 {item.name ?? item.url}
               </a>
-              <button
-                type="button"
-                onClick={() => removeAt(i)}
-                className="text-muted hover:text-red-500 shrink-0"
-              >
-                ×
-              </button>
             </div>
           ))}
         </div>
       )}
+
+      {uploadError && <p className="text-sm text-red-500">{uploadError}</p>}
 
       {atLimit ? (
         <p className="text-xs text-muted">Máximo de {field.maxItems} atingido.</p>
@@ -151,13 +188,15 @@ export function FieldRenderer({
   showError,
   token,
   bucket = "briefing-anexos",
+  coupleTerms = resolveCoupleTerms(),
 }: FieldRendererProps) {
   const errorRing = showError ? "border-red-400 focus:ring-red-200" : "";
+  const label = applyCoupleTerms(field.label, coupleTerms);
 
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[15px] font-medium text-foreground">
-        {field.label}
+        {label}
         {field.required && <span className="text-brand"> *</span>}
       </label>
       {field.help && <p className="text-sm text-muted -mt-1">{field.help}</p>}

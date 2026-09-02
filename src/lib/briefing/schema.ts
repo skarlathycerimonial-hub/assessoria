@@ -42,8 +42,8 @@ export const briefingSections: BriefingSection[] = [
       "Só pra gente se localizar. Sem pressa, dá pra parar e voltar quando quiser — o link salva tudo.",
     fields: [
       { key: "email", label: "E-mail", type: "email", required: true },
-      { key: "noiva", label: "Nome do(a) noivo(a) 1", type: "text", required: true },
-      { key: "noivo", label: "Nome do(a) noivo(a) 2", type: "text", required: true },
+      { key: "noiva", label: "Nome {{nome1}}", type: "text", required: true },
+      { key: "noivo", label: "Nome {{nome2}}", type: "text", required: true },
       {
         key: "apelidos",
         label: "Como podemos chamar vocês? (apelidos)",
@@ -219,8 +219,13 @@ export const briefingSections: BriefingSection[] = [
       },
       {
         key: "musica_cerimonia",
-        label: "O que pensaram para a música da cerimônia? Pode colar um link do YouTube",
-        type: "media",
+        label: "Nome das músicas que pensaram para a cerimônia",
+        type: "textarea",
+      },
+      {
+        key: "musica_cerimonia_link",
+        label: "Link do YouTube (se quiser)",
+        type: "text",
       },
       {
         key: "clarinada",
@@ -455,7 +460,7 @@ export const briefingSections: BriefingSection[] = [
       },
       {
         key: "perfil_noiva_festa",
-        label: "Na festa, o(a) noivo(a) 1 é do tipo...",
+        label: "Na festa, {{sujeito1}} é do tipo...",
         type: "select",
         options: [
           "Que não sai da pista de dança",
@@ -467,7 +472,7 @@ export const briefingSections: BriefingSection[] = [
       },
       {
         key: "perfil_noivo_festa",
-        label: "Na festa, o(a) noivo(a) 2 é do tipo...",
+        label: "Na festa, {{sujeito2}} é do tipo...",
         type: "select",
         options: [
           "Que não sai da pista de dança",
@@ -588,14 +593,14 @@ export const briefingSections: BriefingSection[] = [
     fields: [
       {
         key: "noivo_traje",
-        label: "Noivo(a) 2 pretende...",
+        label: "{{rotulo2}} pretende...",
         type: "select",
         options: ["Alugar", "Comprar", "Mandar fazer"],
       },
       { key: "noivo_cor_estilo", label: "Já tem em mente cor ou estilo do terno?", type: "text" },
       {
         key: "noiva_vestido",
-        label: "Noivo(a) 1 pretende...",
+        label: "{{rotulo1}} pretende...",
         type: "select",
         options: ["Alugar", "Comprar", "Mandar fazer", "Primeiro aluguel"],
       },

@@ -7,6 +7,7 @@ import { CopyLinkButton } from "@/components/dashboard/CopyLinkButton";
 import { DeleteEventButton } from "@/components/dashboard/DeleteEventButton";
 import { CoupleAvatar } from "@/components/avatar/CoupleAvatar";
 import { defaultAvatar1, defaultAvatar2, type AvatarConfig } from "@/lib/avatar/types";
+import { applyCoupleTerms, resolveCoupleTerms } from "@/lib/avatar/coupleTerms";
 
 function formatValue(value: unknown): string | null {
   if (value === undefined || value === null) return null;
@@ -65,6 +66,7 @@ export default async function CasalPage({
   const responses = (event.responses ?? {}) as Record<string, unknown>;
   const avatar1 = (event.avatar1 as AvatarConfig | null) ?? defaultAvatar1;
   const avatar2 = (event.avatar2 as AvatarConfig | null) ?? defaultAvatar2;
+  const coupleTerms = resolveCoupleTerms(event.avatar1, event.avatar2);
 
   return (
     <div>
@@ -122,7 +124,7 @@ export default async function CasalPage({
                 {rows.map((field) => (
                   <div key={field.key} className={field.type === "media" ? "sm:col-span-2" : undefined}>
                     <dt className="text-xs uppercase tracking-wide text-muted mb-1">
-                      {field.label}
+                      {applyCoupleTerms(field.label, coupleTerms)}
                     </dt>
                     <dd className="text-[15px] text-foreground whitespace-pre-wrap">
                       {field.type === "media" ? (

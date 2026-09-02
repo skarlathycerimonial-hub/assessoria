@@ -6,6 +6,7 @@ import { briefingSections } from "@/lib/briefing/schema";
 import { FieldRenderer, type FieldValue } from "./FieldRenderer";
 import { BriefingProgress } from "./BriefingProgress";
 import type { AvatarConfig } from "@/lib/avatar/types";
+import { resolveCoupleTerms } from "@/lib/avatar/coupleTerms";
 
 type Responses = Record<string, FieldValue>;
 
@@ -39,6 +40,7 @@ export function BriefingForm({
 
   const totalSteps = briefingSections.length;
   const section = briefingSections[stepIndex];
+  const coupleTerms = resolveCoupleTerms(avatar1, avatar2);
 
   // Encadeia os saves (um de cada vez, na ordem certa) pra nunca deixar um
   // autosave mais lento sobrepor um "enviar" que já foi disparado depois.
@@ -147,6 +149,7 @@ export function BriefingForm({
             onChange={(v) => updateField(field.key, v)}
             showError={showErrors && field.required && !isFilled(responses[field.key])}
             token={token}
+            coupleTerms={coupleTerms}
           />
         ))}
       </div>

@@ -55,7 +55,6 @@ export function ChaLingerieForm({
   const [justSaved, setJustSaved] = useState(false);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const skipFirstSave = useRef(true);
 
   useEffect(() => {
     if (mode !== "create") return;
@@ -72,36 +71,46 @@ export function ChaLingerieForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function persist(complete: boolean, current = responses, currentGuests = convidadas) {
-    if (!tokens) return;
+  // Encadeia os saves (um só de cada vez, na ordem certa) pra nunca deixar um
+  // autosave mais lento sobrepor um "finalizar" que já foi enviado depois.
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
+
+  function persist(complete: boolean, current = responses, currentGuests = convidadas, currentTokens = tokens) {
+    if (!currentTokens) return;
     setSaving(true);
     const dataEvento =
       current.data_modo === "tenho" && current.data_evento ? (current.data_evento as string) : null;
-    supabase
-      .rpc("cha_lingerie_save", {
-        p_edit_token: tokens.edit,
-        p_noiva: (current.nome_noiva as string) || null,
-        p_responses: current,
-        p_convidadas: currentGuests,
-        p_data_evento: dataEvento,
-        p_complete: complete,
-      })
+    saveQueue.current = saveQueue.current
+      .then(() =>
+        supabase.rpc("cha_lingerie_save", {
+          p_edit_token: currentTokens.edit,
+          p_noiva: (current.nome_noiva as string) || null,
+          p_responses: current,
+          p_convidadas: currentGuests,
+          p_data_evento: dataEvento,
+          p_complete: complete,
+        })
+      )
       .then(() => setSaving(false));
   }
 
-  useEffect(() => {
-    if (skipFirstSave.current) {
-      skipFirstSave.current = false;
-      return;
-    }
+  function scheduleSave(nextResponses: Responses, nextGuests: Guest[]) {
     if (!tokens) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => persist(false), 900);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [responses, convidadas, tokens]);
+    saveTimer.current = setTimeout(() => persist(false, nextResponses, nextGuests), 900);
+  }
 
   function updateField(key: string, value: FieldValue) {
-    setResponses((prev) => ({ ...prev, [key]: value }));
+    setResponses((prev) => {
+      const next = { ...prev, [key]: value };
+      scheduleSave(next, convidadas);
+      return next;
+    });
+  }
+
+  function updateGuests(next: Guest[]) {
+    setConvidadas(next);
+    scheduleSave(responses, next);
   }
 
   function goNext() {
@@ -215,7 +224,7 @@ export function ChaLingerieForm({
             showError={showErrors}
           />
         )}
-        {stepIndex === 1 && <GuestListStep guests={convidadas} onChange={setConvidadas} />}
+        {stepIndex === 1 && <GuestListStep guests={convidadas} onChange={updateGuests} />}
         {stepIndex >= 2 && (
           <div className="flex flex-col gap-7">
             {chaLingerieSteps[stepIndex - 2].fields.map((field) => (

@@ -40,18 +40,24 @@ export function BriefingForm({
   const totalSteps = briefingSections.length;
   const section = briefingSections[stepIndex];
 
+  // Encadeia os saves (um de cada vez, na ordem certa) pra nunca deixar um
+  // autosave mais lento sobrepor um "enviar" que já foi disparado depois.
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
+
   function persist(next: Responses, complete: boolean) {
     setSaving(true);
-    supabase
-      .rpc("briefing_save", {
-        p_token: token,
-        p_responses: next,
-        p_noiva: (next.noiva as string) ?? null,
-        p_noivo: (next.noivo as string) ?? null,
-        p_email: (next.email as string) ?? null,
-        p_data_evento: (next.data_evento as string) || null,
-        p_complete: complete,
-      })
+    saveQueue.current = saveQueue.current
+      .then(() =>
+        supabase.rpc("briefing_save", {
+          p_token: token,
+          p_responses: next,
+          p_noiva: (next.noiva as string) ?? null,
+          p_noivo: (next.noivo as string) ?? null,
+          p_email: (next.email as string) ?? null,
+          p_data_evento: (next.data_evento as string) || null,
+          p_complete: complete,
+        })
+      )
       .then(() => setSaving(false));
   }
 
